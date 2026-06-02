@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Agenda Fábio Padote">
+<title>Agenda · Fábio Padote</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--bg2:#181818;--bg3:#222222;--bg4:#2a2a2a;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
+  --text:#f0ede8;--text2:#8a8780;--text3:#555350;
+  --accent:#c8f060;--accent-dim:rgba(200,240,96,0.12);--accent-border:rgba(200,240,96,0.3);
+  --red:#ff6b6b;--red-dim:rgba(255,107,107,0.12);
+  --orange:#ff9f5a;--orange-dim:rgba(255,159,90,0.12);
+  --blue:#60b4f0;--blue-dim:rgba(96,180,240,0.12);
+  --purple:#b060f0;--purple-dim:rgba(176,96,240,0.12);
+  --teal:#5af0d4;--teal-dim:rgba(90,240,212,0.12);
+  --pink:#f060b4;--pink-dim:rgba(240,96,180,0.12);
+  --yellow:#f0d060;--yellow-dim:rgba(240,208,96,0.12);
+  --gray-dim:rgba(255,255,255,0.05);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;overflow-x:hidden;}
+
+/* HEADER */
+.app-header{position:sticky;top:0;z-index:100;background:rgba(15,15,15,0.95);backdrop-filter:blur(12px);border-bottom:0.5px solid var(--border);padding:.875rem 1.25rem .75rem;}
+.app-header-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem;gap:8px;}
+.app-logo{font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;font-family:'DM Mono',monospace;}
+.app-name{font-size:15px;font-weight:600;color:var(--text);margin-top:2px;}
+.app-date{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:3px;}
+.app-date-sub{font-size:10px;color:var(--accent);font-family:'DM Mono',monospace;margin-top:1px;}
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.notif-btn{background:var(--accent-dim);border:.5px solid var(--accent-border);color:var(--accent);font-size:11px;font-family:'DM Mono',monospace;padding:4px 10px;border-radius:20px;cursor:pointer;white-space:nowrap;}
+.notif-btn.on{background:var(--accent);color:#0f0f0f;}
+.sync-status{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);}
+.sync-status.ok{color:var(--teal);}.sync-status.err{color:var(--red);}
+
+/* NAV TABS */
+.nav-tabs{display:flex;gap:0;border-bottom:.5px solid var(--border);margin-bottom:0;}
+.nav-tab{flex:1;padding:8px 4px;font-size:11px;font-weight:500;text-align:center;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;font-family:'DM Mono',monospace;letter-spacing:.04em;transition:all .15s;}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* DAY TABS */
+.day-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:.75rem 1.25rem .5rem;}
+.day-tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:6px 14px;font-size:12px;font-weight:500;border-radius:20px;border:.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;}
+.tab.active{background:var(--accent);color:#0f0f0f;border-color:var(--accent);font-weight:600;}
+.tab.today{border-color:var(--accent-border);color:var(--accent);}
+
+/* NOTES */
+.notes-bar{padding:.625rem 1.25rem;border-bottom:.5px solid var(--border);background:var(--bg2);}
+.notes-bar textarea{width:100%;background:transparent;border:none;outline:none;color:var(--text2);font-size:12px;font-family:'Sora',sans-serif;resize:none;line-height:1.5;}
+.notes-bar textarea::placeholder{color:var(--text3);}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding:.625rem 1.25rem;border-bottom:.5px solid var(--border);}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.leg-dot{width:7px;height:7px;border-radius:50%;}
+
+/* TIMELINE */
+.timeline{padding:1rem 1.25rem 6rem;}
+.block-row{display:flex;gap:10px;align-items:stretch;margin-bottom:5px;}
+.time-col{width:44px;flex-shrink:0;display:flex;align-items:flex-start;padding-top:10px;}
+.time-txt{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1;}
+.block{flex:1;border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;border:.5px solid transparent;min-height:42px;position:relative;overflow:hidden;}
+.block:active{opacity:.8;}
+.block-info{display:flex;flex-direction:column;gap:2px;flex:1;}
+.block-name{font-size:13px;font-weight:500;}
+.block-dur{font-size:10px;font-family:'DM Mono',monospace;opacity:.7;}
+.block-status-row{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.status-badge{font-size:10px;font-family:'DM Mono',monospace;padding:2px 8px;border-radius:10px;font-weight:500;}
+.status-done{background:rgba(200,240,96,0.15);color:var(--accent);}
+.status-partial{background:rgba(255,159,90,0.15);color:var(--orange);}
+.status-skip{background:rgba(255,107,107,0.12);color:var(--red);}
+.block-progress{position:absolute;bottom:0;left:0;height:2px;background:var(--accent);border-radius:0 2px 2px 0;opacity:.6;}
+.block-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;margin-left:8px;}
+.block-icon{font-size:13px;opacity:.4;}
+.quick-done{width:28px;height:28px;border-radius:50%;border:.5px solid var(--accent-border);background:var(--accent-dim);color:var(--accent);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.quick-done.done{background:var(--accent);color:#0f0f0f;}
+.free-block{border:.5px dashed var(--border2);background:transparent;}
+.free-block .block-name{font-size:11px;color:var(--text3);}
+
+/* BLOCK COLORS */
+.cat-acordar{background:var(--yellow-dim);border-color:rgba(240,208,96,.2);}.cat-acordar .block-name{color:var(--yellow);}
+.cat-meditacao{background:var(--purple-dim);border-color:rgba(176,96,240,.2);}.cat-meditacao .block-name{color:var(--purple);}
+.cat-skyfit{background:var(--blue-dim);border-color:rgba(96,180,240,.2);}.cat-skyfit .block-name{color:var(--blue);}
+.cat-treino{background:var(--accent-dim);border-color:var(--accent-border);}.cat-treino .block-name{color:var(--accent);}
+.cat-almoco{background:var(--orange-dim);border-color:rgba(255,159,90,.2);}.cat-almoco .block-name{color:var(--orange);}
+.cat-outboxing{background:var(--red-dim);border-color:rgba(255,107,107,.2);}.cat-outboxing .block-name{color:var(--red);}
+.cat-personal{background:var(--pink-dim);border-color:rgba(240,96,180,.2);}.cat-personal .block-name{color:var(--pink);}
+.cat-pos{background:var(--teal-dim);border-color:rgba(90,240,212,.2);}.cat-pos .block-name{color:var(--teal);}
+.cat-leitura{background:var(--gray-dim);border-color:var(--border2);}.cat-leitura .block-name{color:var(--text2);}
+.cat-consultoria{background:rgba(255,107,107,.07);border-color:rgba(255,107,107,.15);}.cat-consultoria .block-name{color:#ff9090;}
+.cat-lazer{background:var(--pink-dim);border-color:rgba(240,96,180,.2);}.cat-lazer .block-name{color:var(--pink);}
+.cat-livre{background:var(--gray-dim);border-color:var(--border);}.cat-livre .block-name{color:var(--text2);}
+.cat-dormir{background:rgba(30,30,30,.8);border-color:var(--border);}.cat-dormir .block-name{color:var(--text3);}
+
+/* FAB */
+.fab{position:fixed;bottom:1.5rem;right:1.25rem;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#0f0f0f;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;z-index:200;box-shadow:0 4px 20px rgba(200,240,96,.3);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:flex-end;justify-content:center;z-index:300;backdrop-filter:blur(4px);}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;border-top:.5px solid var(--border2);padding:1.5rem 1.25rem 2.5rem;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+.modal-handle{width:36px;height:3px;background:var(--border2);border-radius:2px;margin:0 auto 1.25rem;}
+.modal-title{font-size:14px;font-weight:600;margin-bottom:1.25rem;color:var(--text);}
+.field-label{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;margin-top:14px;}
+.field-label:first-of-type{margin-top:0;}
+input[type=text],input[type=time],input[type=number],select,textarea.modal-ta{width:100%;background:var(--bg3);border:.5px solid var(--border2);border-radius:10px;color:var(--text);font-size:14px;font-family:'Sora',sans-serif;padding:10px 12px;outline:none;}
+select option{background:var(--bg3);}
+input:focus,select:focus{border-color:var(--accent);}
+.time-row{display:flex;gap:10px;}.time-row input{flex:1;}
+.modal-actions{display:flex;gap:10px;margin-top:1.25rem;}
+.btn{flex:1;padding:12px;border-radius:10px;font-size:13px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;border:.5px solid var(--border2);background:transparent;color:var(--text2);}
+.btn-primary{background:var(--accent);color:#0f0f0f;border-color:var(--accent);}
+.btn-danger{background:var(--red-dim);color:var(--red);border-color:rgba(255,107,107,.3);}
+.cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.cat-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;border:.5px solid var(--border2);background:var(--bg3);color:var(--text2);}
+.cat-chip.selected{background:var(--accent-dim);border-color:var(--accent-border);color:var(--accent);}
+.custom-cat-row{display:flex;gap:8px;margin-top:8px;}
+.custom-cat-row input{flex:1;}
+.custom-cat-row button{padding:10px 14px;border-radius:10px;background:var(--accent-dim);border:.5px solid var(--accent-border);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;flex-shrink:0;}
+.status-btns{display:flex;gap:8px;margin-top:4px;}
+.status-btn{flex:1;padding:10px 6px;border-radius:10px;font-size:12px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;border:.5px solid var(--border2);background:var(--bg3);color:var(--text2);text-align:center;}
+.status-btn.s-done{border-color:var(--accent-border);background:var(--accent-dim);color:var(--accent);}
+.status-btn.s-partial{border-color:rgba(255,159,90,.3);background:var(--orange-dim);color:var(--orange);}
+.status-btn.s-skip{border-color:rgba(255,107,107,.3);background:var(--red-dim);color:var(--red);}
+.partial-mins{margin-top:8px;}
+
+/* STATS */
+.stats-page{padding:1rem 1.25rem 6rem;display:none;}
+.stats-page.visible{display:block;}
+.stats-section{margin-bottom:1.5rem;}
+.stats-title{font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;}
+.score-card{background:var(--bg2);border:.5px solid var(--border2);border-radius:16px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;}
+.score-big{font-size:36px;font-weight:600;color:var(--accent);font-family:'DM Mono',monospace;line-height:1;}
+.score-info{flex:1;}
+.score-label{font-size:13px;font-weight:500;color:var(--text);}
+.score-sub{font-size:11px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;}
+.bar-list{display:flex;flex-direction:column;gap:8px;}
+.bar-item{background:var(--bg2);border:.5px solid var(--border);border-radius:12px;padding:.75rem 1rem;}
+.bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.bar-name{font-size:12px;font-weight:500;color:var(--text2);}
+.bar-pct{font-size:11px;font-family:'DM Mono',monospace;color:var(--accent);}
+.bar-track{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .4s ease;}
+.bar-fill.partial{background:var(--orange);}
+.bar-fill.skip{background:var(--red);}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.week-day-col{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.week-day-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:2px;}
+.week-dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:'DM Mono',monospace;font-weight:600;}
+.wd-empty{background:var(--bg2);color:var(--text3);}
+.wd-great{background:rgba(200,240,96,.2);color:var(--accent);}
+.wd-ok{background:rgba(255,159,90,.15);color:var(--orange);}
+.wd-bad{background:rgba(255,107,107,.12);color:var(--red);}
+.wd-none{background:var(--bg3);color:var(--text3);}
+
+/* TOAST */
+.toast{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:var(--bg2);border:.5px solid var(--border2);border-radius:12px;padding:10px 16px;font-size:12px;color:var(--text2);z-index:400;white-space:nowrap;max-width:90vw;text-align:center;}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-header-top">
+    <div>
+      <div class="app-logo">PADOTY · Agenda</div>
+      <div class="app-name">Fábio Padote</div>
+      <div class="app-date" id="curr-date"></div>
+      <div class="app-date-sub" id="curr-date-sub"></div>
+    </div>
+    <div class="header-right">
+      <button class="notif-btn" id="notif-btn" onclick="toggleNotif()">🔔 Alertas</button>
+      <span class="sync-status" id="sync-status">● local</span>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('agenda')" id="nt-agenda">AGENDA</div>
+    <div class="nav-tab" onclick="showPage('stats')" id="nt-stats">PRODUTIVIDADE</div>
+  </div>
+</div>
+
+<!-- AGENDA PAGE -->
+<div id="page-agenda">
+  <div class="day-tabs" id="tabs"></div>
+  <div class="notes-bar">
+    <textarea id="day-notes" rows="2" placeholder="📝 Notas do dia — algo diferente hoje?"></textarea>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#60b4f0"></div>SkyFit</div>
+    <div class="leg"><div class="leg-dot" style="background:#c8f060"></div>Treino</div>
+    <div class="leg"><div class="leg-dot" style="background:#5af0d4"></div>Pós-grad</div>
+    <div class="leg"><div class="leg-dot" style="background:#f060b4"></div>Personal</div>
+    <div class="leg"><div class="leg-dot" style="background:#ff6b6b"></div>Outboxing</div>
+    <div class="leg"><div class="leg-dot" style="background:#b060f0"></div>Meditação</div>
+    <div class="leg"><div class="leg-dot" style="background:#ff9090"></div>Consultoria</div>
+  </div>
+  <div class="timeline" id="timeline"></div>
+</div>
+
+<!-- STATS PAGE -->
+<div id="page-stats" class="stats-page">
+  <div id="stats-content"></div>
+</div>
+
+<button class="fab" id="fab">+</button>
+
+<script>
+const DAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DAYMAP={0:'Dom',1:'Seg',2:'Ter',3:'Qua',4:'Qui',5:'Sex',6:'Sáb'};
+const CATS=[
+  {v:'acordar',l:'Acordar'},{v:'meditacao',l:'Meditação'},{v:'skyfit',l:'SkyFit'},
+  {v:'treino',l:'Treino'},{v:'almoco',l:'Almoço'},{v:'outboxing',l:'Outboxing'},
+  {v:'personal',l:'Personal'},{v:'pos',l:'Pós-graduação'},{v:'leitura',l:'Leitura'},
+  {v:'consultoria',l:'Consultoria'},{v:'lazer',l:'Lazer / Camila'},
+  {v:'livre',l:'Livre / Descanso'},{v:'dormir',l:'Dormir'},
+];
+const SKIP_STATUS=['acordar','dormir','livre'];
+const MEAL_CATS=['almoco','janta','refeicao'];
+function isMeal(cat){return MEAL_CATS.includes(cat);}
+
+const INITIAL={
+  Dom:[],
+  Seg:[
+    {id:'sg1',start:'03:45',end:'03:55',name:'Acordar',cat:'acordar'},
+    {id:'sg2',start:'03:55',end:'04:10',name:'Meditação',cat:'meditacao'},
+    {id:'sg3',start:'05:00',end:'12:00',name:'SkyFit',cat:'skyfit'},
+    {id:'sg4',start:'12:00',end:'12:50',name:'Treino',cat:'treino'},
+    {id:'sg5',start:'13:00',end:'13:40',name:'Almoço',cat:'almoco'},
+    {id:'sg6',start:'14:00',end:'14:30',name:'Leitura',cat:'leitura'},
+    {id:'sg7',start:'15:00',end:'16:30',name:'Outboxing',cat:'outboxing'},
+    {id:'sg8',start:'17:00',end:'18:00',name:'Consultoria',cat:'consultoria'},
+    {id:'sg9',start:'18:00',end:'20:00',name:'Pós-graduação',cat:'pos'},
+    {id:'sg10',start:'20:00',end:'21:30',name:'Livre / Descanso',cat:'livre'},
+    {id:'sg11',start:'21:30',end:'21:35',name:'Dormir',cat:'dormir'},
+  ],
+  Ter:[
+    {id:'tr1',start:'03:45',end:'03:55',name:'Acordar',cat:'acordar'},
+    {id:'tr2',start:'03:55',end:'04:10',name:'Meditação',cat:'meditacao'},
+    {id:'tr3',start:'05:00',end:'11:00',name:'SkyFit',cat:'skyfit'},
+    {id:'tr4',start:'11:00',end:'11:50',name:'Treino',cat:'treino'},
+    {id:'tr5',start:'12:00',end:'12:40',name:'Almoço',cat:'almoco'},
+    {id:'tr6',start:'13:00',end:'13:30',name:'Leitura',cat:'leitura'},
+    {id:'tr7',start:'15:00',end:'16:30',name:'Outboxing',cat:'outboxing'},
+    {id:'tr8',start:'16:30',end:'17:30',name:'Personal',cat:'personal'},
+    {id:'tr9',start:'17:30',end:'18:30',name:'Consultoria',cat:'consultoria'},
+    {id:'tr10',start:'18:30',end:'20:30',name:'Pós-graduação',cat:'pos'},
+    {id:'tr11',start:'20:30',end:'21:30',name:'Livre / Descanso',cat:'livre'},
+    {id:'tr12',start:'21:30',end:'21:35',name:'Dormir',cat:'dormir'},
+  ],
+  Qua:[
+    {id:'qa1',start:'03:45',end:'03:55',name:'Acordar',cat:'acordar'},
+    {id:'qa2',start:'03:55',end:'04:10',name:'Meditação',cat:'meditacao'},
+    {id:'qa3',start:'05:00',end:'12:00',name:'SkyFit',cat:'skyfit'},
+    {id:'qa4',start:'12:00',end:'12:50',name:'Treino',cat:'treino'},
+    {id:'qa5',start:'13:00',end:'13:40',name:'Almoço',cat:'almoco'},
+    {id:'qa6',start:'14:00',end:'14:30',name:'Leitura',cat:'leitura'},
+    {id:'qa7',start:'15:00',end:'16:30',name:'Outboxing',cat:'outboxing'},
+    {id:'qa8',start:'17:00',end:'18:00',name:'Consultoria',cat:'consultoria'},
+    {id:'qa9',start:'18:00',end:'20:00',name:'Pós-graduação',cat:'pos'},
+    {id:'qa10',start:'20:00',end:'21:30',name:'Livre / Descanso',cat:'livre'},
+    {id:'qa11',start:'21:30',end:'21:35',name:'Dormir',cat:'dormir'},
+  ],
+  Qui:[
+    {id:'qi1',start:'03:45',end:'03:55',name:'Acordar',cat:'acordar'},
+    {id:'qi2',start:'03:55',end:'04:10',name:'Meditação',cat:'meditacao'},
+    {id:'qi3',start:'05:00',end:'11:00',name:'SkyFit',cat:'skyfit'},
+    {id:'qi4',start:'11:00',end:'11:50',name:'Treino',cat:'treino'},
+    {id:'qi5',start:'12:00',end:'12:40',name:'Almoço',cat:'almoco'},
+    {id:'qi6',start:'13:00',end:'13:30',name:'Leitura',cat:'leitura'},
+    {id:'qi7',start:'15:00',end:'16:30',name:'Outboxing',cat:'outboxing'},
+    {id:'qi8',start:'16:30',end:'17:30',name:'Personal',cat:'personal'},
+    {id:'qi9',start:'17:30',end:'18:30',name:'Consultoria',cat:'consultoria'},
+    {id:'qi10',start:'18:30',end:'20:30',name:'Pós-graduação',cat:'pos'},
+    {id:'qi11',start:'20:30',end:'21:30',name:'Livre / Descanso',cat:'livre'},
+    {id:'qi12',start:'21:30',end:'21:35',name:'Dormir',cat:'dormir'},
+  ],
+  Sex:[
+    {id:'sx1',start:'03:45',end:'03:55',name:'Acordar',cat:'acordar'},
+    {id:'sx2',start:'03:55',end:'04:10',name:'Meditação',cat:'meditacao'},
+    {id:'sx3',start:'05:00',end:'12:00',name:'SkyFit',cat:'skyfit'},
+    {id:'sx4',start:'12:00',end:'12:50',name:'Treino',cat:'treino'},
+    {id:'sx5',start:'13:00',end:'13:40',name:'Almoço',cat:'almoco'},
+    {id:'sx6',start:'14:00',end:'14:30',name:'Leitura',cat:'leitura'},
+    {id:'sx7',start:'15:00',end:'16:30',name:'Outboxing',cat:'outboxing'},
+    {id:'sx8',start:'17:00',end:'18:00',name:'Consultoria',cat:'consultoria'},
+    {id:'sx9',start:'18:00',end:'20:00',name:'Pós-graduação',cat:'pos'},
+    {id:'sx10',start:'20:00',end:'21:30',name:'Lazer / Camila',cat:'lazer'},
+    {id:'sx11',start:'21:30',end:'21:35',name:'Dormir',cat:'dormir'},
+  ],
+  Sáb:[
+    {id:'sb1',start:'03:45',end:'03:55',name:'Acordar',cat:'acordar'},
+    {id:'sb2',start:'03:55',end:'04:10',name:'Meditação',cat:'meditacao'},
+    {id:'sb3',start:'08:00',end:'12:30',name:'SkyFit / Outbox',cat:'skyfit'},
+    {id:'sb4',start:'12:30',end:'13:20',name:'Treino',cat:'treino'},
+    {id:'sb5',start:'13:30',end:'14:10',name:'Almoço',cat:'almoco'},
+    {id:'sb6',start:'14:30',end:'17:00',name:'Curso / Estudo livre',cat:'pos'},
+    {id:'sb7',start:'17:00',end:'21:30',name:'Lazer / Camila',cat:'lazer'},
+    {id:'sb8',start:'21:30',end:'21:35',name:'Dormir',cat:'dormir'},
+  ],
+};
+
+let schedule, notes={}, logs={}, notifEnabled=false, notifTimers=[], idC=Date.now();
+let activeDay=DAYMAP[new Date().getDay()]||'Seg';
+let fbLoaded=false;
+let customCats=[];
+let _selCat='livre', _selStatus='done', currentPage='agenda';
+
+function loadLocal(){
+  try{
+    const s=localStorage.getItem('padote_v6');schedule=s?JSON.parse(s):JSON.parse(JSON.stringify(INITIAL));
+    const n=localStorage.getItem('padote_notes_v6');notes=n?JSON.parse(n):{};
+    const l=localStorage.getItem('padote_logs_v6');logs=l?JSON.parse(l):{};
+    const c=localStorage.getItem('padote_cats');customCats=c?JSON.parse(c):[];
+    notifEnabled=localStorage.getItem('padote_notif')==='1';
+  }catch(e){schedule=JSON.parse(JSON.stringify(INITIAL));notes={};logs={};}
+}
+function saveLocal(){
+  try{
+    localStorage.setItem('padote_v6',JSON.stringify(schedule));
+    localStorage.setItem('padote_notes_v6',JSON.stringify(notes));
+    localStorage.setItem('padote_logs_v6',JSON.stringify(logs));
+    localStorage.setItem('padote_cats',JSON.stringify(customCats));
+  }catch(e){}
+}
+
+function toM(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function toT(m){const h=Math.floor(m/60)%24,mn=m%60;return`${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`;}
+function durStr(s,e){const d=toM(e)-toM(s);if(d<=0)return'';const h=Math.floor(d/60),m=d%60;if(h&&m)return`${h}h${m}m`;if(h)return`${h}h`;return`${m}m`;}
+function durMins(s,e){return Math.max(0,toM(e)-toM(s));}
+
+function getDateForDay(dayName){
+  const idx=DAYS.indexOf(dayName),today=new Date(),diff=idx-today.getDay(),t=new Date(today);
+  t.setDate(today.getDate()+diff);return t;
+}
+function dateKey(dayName){return getDateForDay(dayName).toISOString().slice(0,10);}
+function formatDate(d){return d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+function isToday(d){return DAYMAP[new Date().getDay()]===d;}
+
+// ── LOGS (status per block per date) ──
+function getLog(blockId, dk){return(logs[dk]||{})[blockId]||null;}
+function setLog(blockId, dk, data){if(!logs[dk])logs[dk]={};logs[dk][blockId]=data;saveLocal();if(fbLoaded)fbSaveLogs();}
+
+// ── PAGES ──
+function showPage(p){
+  currentPage=p;
+  document.getElementById('page-agenda').style.display=p==='agenda'?'':'none';
+  document.getElementById('page-stats').style.display=p==='stats'?'':'none';
+  document.getElementById('page-stats').className='stats-page'+(p==='stats'?' visible':'');
+  document.getElementById('fab').style.display=p==='agenda'?'':'none';
+  document.getElementById('nt-agenda').className='nav-tab'+(p==='agenda'?' active':'');
+  document.getElementById('nt-stats').className='nav-tab'+(p==='stats'?' active':'');
+  if(p==='stats')renderStats();
+}
+
+// ── RENDER TABS ──
+function renderTabs(){
+  const tn=DAYMAP[new Date().getDay()];
+  document.getElementById('tabs').innerHTML=DAYS.map(d=>
+    `<button class="tab ${d===activeDay?'active':d===tn?'today':''}" onclick="setDay('${d}')">${d}</button>`
+  ).join('');
+  const dt=getDateForDay(activeDay);
+  document.getElementById('curr-date').textContent=formatDate(dt);
+  document.getElementById('curr-date-sub').textContent=isToday(activeDay)?'● hoje':'';
+}
+
+function renderNotes(){
+  const ta=document.getElementById('day-notes');if(!ta)return;
+  const k=dateKey(activeDay);
+  ta.value=notes[k]||'';
+  ta.oninput=()=>{notes[k]=ta.value;saveLocal();if(fbLoaded)fbSaveNotes();};
+}
+
+function getBlocks(day){
+  const sorted=[...(schedule[day]||[])].sort((a,b)=>toM(a.start)-toM(b.start));
+  const START=toM('03:45'),END=toM('21:35'),result=[];let cur=START;
+  sorted.forEach(b=>{
+    const bs=toM(b.start),be=toM(b.end);
+    if(bs>cur+4)result.push({free:true,start:toT(cur),end:b.start});
+    result.push({...b,free:false});cur=be;
+  });
+  if(cur<END-4)result.push({free:true,start:toT(cur),end:'21:30'});
+  return result;
+}
+
+function statusBadgeHtml(log, planned, cat){
+  if(!log)return'';
+  const isJejum=log.status==='skip'&&log.jejum;
+  let txt,cls;
+  if(isJejum){txt='🔥 Jejum';cls='status-partial';}
+  else if(log.status==='done'){txt='✓ concluído';cls='status-done';}
+  else if(log.status==='partial'){txt=log.mins?`~ ${log.mins}min feitos`:'~ parcial';cls='status-partial';}
+  else{txt='✗ não fiz';cls='status-skip';}
+  return`<div class="block-status-row"><span class="status-badge ${cls}">${txt}</span></div>`;
+}
+
+function progressBar(log, planned){
+  if(!log||log.status==='skip')return'';
+  const pct=log.status==='done'?100:Math.min(100,Math.round((log.mins||0)/planned*100));
+  if(!pct)return'';
+  return`<div class="block-progress" style="width:${pct}%"></div>`;
+}
+
+function renderTimeline(){
+  const dk=dateKey(activeDay);
+  document.getElementById('timeline').innerHTML=getBlocks(activeDay).map(b=>{
+    if(b.free){
+      if(toM(b.end)-toM(b.start)<5)return'';
+      return`<div class="block-row" onclick="openNew('${b.start}','${b.end}')">
+        <div class="time-col"><span class="time-txt">${b.start}</span></div>
+        <div class="block free-block"><span class="block-name">+ adicionar (${durStr(b.start,b.end)})</span></div>
+      </div>`;
+    }
+    const log=getLog(b.id,dk);
+    const planned=durMins(b.start,b.end);
+    const showStatus=!SKIP_STATUS.includes(b.cat);
+    const isDone=log&&log.status==='done';
+    return`<div class="block-row">
+      <div class="time-col"><span class="time-txt">${b.start}</span></div>
+      <div class="block cat-${b.cat}" onclick="openEdit('${b.id}')">
+        <div class="block-info">
+          <span class="block-name">${b.name}</span>
+          ${durStr(b.start,b.end)?`<span class="block-dur">${durStr(b.start,b.end)}</span>`:''}
+          ${showStatus?statusBadgeHtml(log,planned,b.cat):''}
+        </div>
+        <div class="block-right">
+          ${showStatus?`<button class="quick-done${isDone?' done':''}" onclick="event.stopPropagation();quickDone('${b.id}')">${isDone?'✓':'○'}</button>`:''}
+          <span class="block-icon">✎</span>
+        </div>
+        ${progressBar(log,planned)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quickDone(id){
+  const dk=dateKey(activeDay);
+  const cur=getLog(id,dk);
+  if(cur&&cur.status==='done'){setLog(id,dk,null);}
+  else{setLog(id,dk,{status:'done',mins:null});}
+  if(fbLoaded)fbSaveLogs();
+  renderTimeline();
+  if(currentPage==='stats')renderStats();
+}
+
+function render(){renderTabs();renderNotes();renderTimeline();updateNotifBtn();}
+function setDay(d){activeDay=d;render();}
+
+// ── MODAL ──
+function allCats(){return[...CATS,...customCats.map(c=>({v:'cc_'+c.replace(/\s+/g,'_').toLowerCase(),l:c}))];}
+function renderCatChips(sel){
+  const el=document.getElementById('cat-chips');if(!el)return;
+  el.innerHTML=allCats().map(c=>`<div class="cat-chip${c.v===sel?' selected':''}" onclick="_pickCat('${c.v}')">${c.l}</div>`).join('');
+}
+function renderStatusBtns(sel, cat){
+  const el=document.getElementById('status-btns');if(!el)return;
+  const opts=[
+    {v:'done',l:'✓ Concluído',cls:'s-done'},
+    {v:'partial',l:'~ Parcial',cls:'s-partial'},
+    {v:'skip',l:'✗ Não fiz',cls:'s-skip'},
+  ];
+  if(isMeal(cat)) opts.push({v:'jejum',l:'🔥 Jejum',cls:'s-partial'});
+  el.innerHTML=opts.map(s=>`<button class="status-btn${s.v===sel?' '+s.cls:''}" onclick="_pickStatus('${s.v}')">${s.l}</button>`).join('');
+  const pm=document.getElementById('partial-mins');
+  if(pm)pm.style.display=sel==='partial'?'':'none';
+  const ji=document.getElementById('jejum-info');
+  if(ji)ji.style.display=sel==='jejum'?'':'none';
+}
+
+window._pickCat=function(v){_selCat=v;renderCatChips(v);};
+window._pickStatus=function(v){_selStatus=v;renderStatusBtns(v,_selCat);};
+
+function addCustomCat(){
+  const el=document.getElementById('new-cat-input');const val=el.value.trim();if(!val)return;
+  customCats.push(val);saveLocal();el.value='';renderCatChips(_selCat);showToast('Categoria criada!');
+}
+
+function showModal(html){closeModal();document.body.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modal" onclick="if(event.target.id==='modal')closeModal()">${html}</div>`);}
+function closeModal(){const m=document.getElementById('modal');if(m)m.remove();}
+
+function openNew(start,end){
+  _selCat='livre';
+  const s=start||'08:00',e=end||'09:00';
+  showModal(`<div class="modal">
+    <div class="modal-handle"></div>
+    <p class="modal-title">Novo bloco</p>
+    <div class="field-label">Atividade</div>
+    <input type="text" id="mn" placeholder="Nome..."/>
+    <div class="field-label">Categoria</div>
+    <div class="cat-chips" id="cat-chips"></div>
+    <div class="custom-cat-row"><input type="text" id="new-cat-input" placeholder="Nova categoria..."/><button onclick="addCustomCat()">+ Criar</button></div>
+    <div class="field-label">Horário</div>
+    <div class="time-row"><input type="time" id="ms" value="${s}"/><input type="time" id="me" value="${e}"/></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNew()">Salvar</button>
+    </div>
+  </div>`);
+  renderCatChips('livre');
+  setTimeout(()=>{const el=document.getElementById('mn');if(el)el.focus();},100);
+}
+
+function saveNew(){
+  const name=document.getElementById('mn').value.trim();
+  const start=document.getElementById('ms').value,end=document.getElementById('me').value;
+  if(!name)return;
+  if(!schedule[activeDay])schedule[activeDay]=[];
+  schedule[activeDay].push({id:'u'+(++idC),start,end,name,cat:_selCat});
+  saveLocal();if(fbLoaded)fbSaveSchedule();
+  closeModal();renderTimeline();scheduleNotifs();
+}
+
+function openEdit(id){
+  const b=(schedule[activeDay]||[]).find(x=>x.id===id);if(!b)return;
+  _selCat=b.cat;
+  const dk=dateKey(activeDay);
+  const log=getLog(id,dk);
+  _selStatus=log?(log.jejum?'jejum':log.status):'done';
+  const showStatus=!SKIP_STATUS.includes(b.cat);
+  const partMins=log&&log.status==='partial'?log.mins||'':'';
+  showModal(`<div class="modal">
+    <div class="modal-handle"></div>
+    <p class="modal-title">Editar bloco</p>
+    <div class="field-label">Atividade</div>
+    <input type="text" id="mn" value="${b.name}"/>
+    <div class="field-label">Categoria</div>
+    <div class="cat-chips" id="cat-chips"></div>
+    <div class="custom-cat-row"><input type="text" id="new-cat-input" placeholder="Nova categoria..."/><button onclick="addCustomCat()">+ Criar</button></div>
+    <div class="field-label">Horário</div>
+    <div class="time-row"><input type="time" id="ms" value="${b.start}"/><input type="time" id="me" value="${b.end}"/></div>
+    ${showStatus?`
+    <div class="field-label">Status de hoje</div>
+    <div class="status-btns" id="status-btns"></div>
+    <div class="partial-mins" id="partial-mins" style="display:none">
+      <div class="field-label">Quanto tempo fez (minutos)?</div>
+      <input type="number" id="part-mins" placeholder="ex: 30" value="${partMins}" min="1"/>
+    </div>
+    <div id="jejum-info" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,159,90,0.1);border-radius:10px;border:0.5px solid rgba(255,159,90,0.2);font-size:12px;color:var(--orange);">🔥 Registrado como jejum intencional</div>
+    `:''}
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="delBlock('${id}')">Excluir</button>
+      <button class="btn btn-primary" onclick="saveEdit('${id}')">Salvar</button>
+    </div>
+  </div>`);
+  renderCatChips(b.cat);
+  if(showStatus){renderStatusBtns(log&&log.jejum?'jejum':_selStatus, b.cat);}
+}
+
+function saveEdit(id){
+  const b=(schedule[activeDay]||[]).find(x=>x.id===id);if(!b)return;
+  b.name=document.getElementById('mn').value.trim()||b.name;
+  b.cat=_selCat;
+  b.start=document.getElementById('ms').value;
+  b.end=document.getElementById('me').value;
+  const showStatus=!SKIP_STATUS.includes(b.cat);
+  if(showStatus){
+    const dk=dateKey(activeDay);
+    const pmEl=document.getElementById('part-mins');
+    const mins=pmEl?parseInt(pmEl.value)||null:null;
+    if(_selStatus==='jejum'){
+      setLog(id,dk,{status:'skip',jejum:true,mins:null});
+    } else {
+      setLog(id,dk,{status:_selStatus,jejum:false,mins:_selStatus==='partial'?mins:null});
+    }
+  }
+  saveLocal();if(fbLoaded)fbSaveSchedule();
+  closeModal();renderTimeline();scheduleNotifs();
+  if(currentPage==='stats')renderStats();
+}
+
+function delBlock(id){
+  schedule[activeDay]=(schedule[activeDay]||[]).filter(x=>x.id!==id);
+  saveLocal();if(fbLoaded)fbSaveSchedule();
+  closeModal();renderTimeline();
+}
+
+// ── STATS ──
+function calcDayScore(dayName){
+  const dk=getDateForDay(dayName).toISOString().slice(0,10);
+  const blocks=(schedule[dayName]||[]).filter(b=>!SKIP_STATUS.includes(b.cat));
+  if(!blocks.length)return null;
+  let planned=0,done=0;
+  blocks.forEach(b=>{
+    const mins=durMins(b.start,b.end);
+    planned+=mins;
+    const log=getLog(b.id,dk);
+    if(!log)return;
+    if(log.status==='done')done+=mins;
+    else if(log.status==='partial'&&log.mins)done+=Math.min(log.mins,mins);
+  });
+  return planned>0?Math.round(done/planned*100):0;
+}
+
+function calcTodayDetail(){
+  const dk=dateKey(activeDay);
+  const blocks=(schedule[activeDay]||[]).filter(b=>!SKIP_STATUS.includes(b.cat));
+  return blocks.map(b=>{
+    const planned=durMins(b.start,b.end);
+    const log=getLog(b.id,dk);
+    let doneMins=0,status='pending';
+    if(log){
+      status=log.status;
+      if(log.status==='done')doneMins=planned;
+      else if(log.status==='partial'&&log.mins)doneMins=Math.min(log.mins,planned);
+    }
+    const pct=planned>0?Math.round(doneMins/planned*100):0;
+    return{name:b.name,cat:b.cat,planned,doneMins,status,pct};
+  });
+}
+
+function renderStats(){
+  const todayScore=calcDayScore(activeDay)||0;
+  const detail=calcTodayDetail();
+  const weekData=DAYS.map(d=>({day:d,score:calcDayScore(d)}));
+
+  let html=`
+  <div class="stats-section">
+    <div class="stats-title">Hoje · ${getDateForDay(activeDay).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'short'})}</div>
+    <div class="score-card">
+      <div class="score-big">${todayScore}%</div>
+      <div class="score-info">
+        <div class="score-label">${todayScore>=80?'Dia excelente! 🔥':todayScore>=50?'Bom progresso 👍':'Continue firme 💪'}</div>
+        <div class="score-sub">${detail.filter(b=>b.status==='done').length} de ${detail.length} atividades concluídas</div>
+      </div>
+    </div>
+    <div class="bar-list">`;
+
+  detail.forEach(b=>{
+    const fillCls=b.status==='skip'?'skip':b.status==='partial'?'partial':'';
+    html+=`<div class="bar-item">
+      <div class="bar-top">
+        <span class="bar-name">${b.name}</span>
+        <span class="bar-pct" style="color:${b.status==='skip'?'var(--red)':b.status==='partial'?'var(--orange)':'var(--accent)'}">${
+          b.status==='pending'?'pendente':b.status==='skip'?'não fiz':b.pct+'%'
+        }</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${fillCls}" style="width:${b.pct}%"></div></div>
+    </div>`;
+  });
+
+  html+=`</div></div>
+  <div class="stats-section">
+    <div class="stats-title">Semana atual</div>
+    <div class="week-grid">`;
+
+  weekData.forEach(w=>{
+    const s=w.score;
+    let cls='wd-none',label='–';
+    if(s===null){cls='wd-empty';label='–';}
+    else if(s>=80){cls='wd-great';label=s+'%';}
+    else if(s>=40){cls='wd-ok';label=s+'%';}
+    else if(s>0){cls='wd-bad';label=s+'%';}
+    const isAct=w.day===activeDay;
+    html+=`<div class="week-day-col" onclick="setDay('${w.day}');showPage('agenda');" style="cursor:pointer">
+      <div class="week-day-label">${w.day}</div>
+      <div class="week-dot ${cls}" style="${isAct?'outline:1.5px solid var(--accent);outline-offset:2px':''}">${label}</div>
+    </div>`;
+  });
+
+  html+=`</div></div>`;
+  document.getElementById('stats-content').innerHTML=html;
+}
+
+// ── NOTIFICAÇÕES ──
+function updateNotifBtn(){
+  const btn=document.getElementById('notif-btn');
+  if(notifEnabled){btn.textContent='🔔 On';btn.classList.add('on');}
+  else{btn.textContent='🔔 Alertas';btn.classList.remove('on');}
+}
+async function toggleNotif(){
+  if(notifEnabled){notifEnabled=false;localStorage.setItem('padote_notif','0');cancelNotifs();updateNotifBtn();return;}
+  if(!('Notification' in window)){showToast('Navegador não suporta notificações.');return;}
+  const p=await Notification.requestPermission();
+  if(p==='granted'){notifEnabled=true;localStorage.setItem('padote_notif','1');scheduleNotifs();updateNotifBtn();showToast('Alertas ativados!');}
+  else showToast('Permissão negada nas configurações do navegador.');
+}
+function cancelNotifs(){notifTimers.forEach(clearTimeout);notifTimers=[];}
+function scheduleNotifs(){
+  cancelNotifs();if(!notifEnabled||Notification.permission!=='granted')return;
+  const today=DAYMAP[new Date().getDay()];
+  (schedule[today]||[]).forEach(b=>{
+    const[h,m]=b.start.split(':').map(Number),target=new Date();
+    target.setHours(h,m,0,0);const diff=target-Date.now()-5*60*1000;
+    if(diff>0&&diff<86400000)notifTimers.push(setTimeout(()=>new Notification('PADOTY · Agenda',{body:`Em 5 min: ${b.name} (${b.start})`}),diff));
+  });
+}
+
+function showToast(msg){
+  const old=document.getElementById('toast');if(old)old.remove();
+  document.body.insertAdjacentHTML('beforeend',`<div class="toast" id="toast">${msg}</div>`);
+  setTimeout(()=>{const el=document.getElementById('toast');if(el)el.remove();},3000);
+}
+function setSyncStatus(s){
+  const el=document.getElementById('sync-status');
+  if(s==='ok'){el.textContent='● sincronizado';el.className='sync-status ok';}
+  else if(s==='err'){el.textContent='● sem conexão';el.className='sync-status err';}
+  else{el.textContent='● local';el.className='sync-status';}
+}
+
+// ── FIREBASE ──
+let fbSaveSchedule=()=>{},fbSaveNotes=()=>{},fbSaveLogs=()=>{};
+
+async function initFirebase(){
+  try{
+    const{initializeApp}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const{getFirestore,doc,getDoc,setDoc,onSnapshot}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const fbApp=initializeApp({
+      apiKey:'AIzaSyDJYjaxxGyKtEKw64WO_EZUNLWqD8MEnxQ',
+      authDomain:'agenda-fabio-padote.firebaseapp.com',
+      projectId:'agenda-fabio-padote',
+      storageBucket:'agenda-fabio-padote.firebasestorage.app',
+      messagingSenderId:'91640533478',
+      appId:'1:91640533478:web:9e0d506a8456d375e8c627'
+    });
+    const fbDb=getFirestore(fbApp);
+    const schedRef=doc(fbDb,'agenda','schedule');
+    const notesRef=doc(fbDb,'agenda','notes');
+    const logsRef=doc(fbDb,'agenda','logs');
+
+    fbSaveSchedule=async()=>{try{await setDoc(schedRef,schedule);setSyncStatus('ok');}catch(e){setSyncStatus('err');}};
+    fbSaveNotes=async()=>{try{await setDoc(notesRef,notes);}catch(e){}};
+    fbSaveLogs=async()=>{try{await setDoc(logsRef,logs);}catch(e){}};
+
+    const snap=await getDoc(schedRef);
+    if(snap.exists()){schedule=snap.data();saveLocal();renderTimeline();}
+    else await setDoc(schedRef,schedule);
+    const nSnap=await getDoc(notesRef);if(nSnap.exists()){notes=nSnap.data();renderNotes();}
+    const lSnap=await getDoc(logsRef);if(lSnap.exists()){logs=lSnap.data();}
+    setSyncStatus('ok');fbLoaded=true;
+
+    onSnapshot(schedRef,s=>{if(s.exists()){schedule=s.data();saveLocal();renderTimeline();setSyncStatus('ok');}});
+    onSnapshot(logsRef,s=>{if(s.exists()){logs=s.data();renderTimeline();if(currentPage==='stats')renderStats();}});
+  }catch(e){setSyncStatus('err');}
+}
+
+// ── INIT ──
+document.getElementById('fab').onclick=()=>openNew(null,null);
+loadLocal();
+render();
+scheduleNotifs();
+initFirebase();
+setInterval(()=>{if(notifEnabled)scheduleNotifs();},60*60*1000);
+</script>
+</body>
+</html>
