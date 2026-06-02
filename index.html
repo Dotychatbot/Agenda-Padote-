@@ -161,6 +161,9 @@ input:focus,select:focus{border-color:var(--accent);}
 .wd-none{background:var(--bg3);color:var(--text3);}
 
 /* TOAST */
+.replicar-days{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.rep-day{padding:5px 12px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;border:.5px solid var(--border2);background:var(--bg3);color:var(--text2);}
+.rep-day.selected{background:var(--accent-dim);border-color:var(--accent-border);color:var(--accent);}
 .toast{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:var(--bg2);border:.5px solid var(--border2);border-radius:12px;padding:10px 16px;font-size:12px;color:var(--text2);z-index:400;white-space:nowrap;max-width:90vw;text-align:center;}
 </style>
 </head>
@@ -310,6 +313,7 @@ let activeDay=DAYMAP[new Date().getDay()]||'Seg';
 let fbLoaded=false;
 let customCats=[];
 let _selCat='livre', _selStatus='done', currentPage='agenda';
+let _selReplicar=[];
 
 function loadLocal(){
   try{
@@ -480,6 +484,26 @@ function addCustomCat(){
   customCats.push(val);saveLocal();el.value='';renderCatChips(_selCat);showToast('Categoria criada!');
 }
 
+function replicarHtml(){
+  const others=DAYS.filter(d=>d!==activeDay&&d!=='Dom');
+  return`<div class="field-label">Replicar para outros dias</div>
+  <div class="replicar-days" id="rep-days">${others.map(d=>`<div class="rep-day${_selReplicar.includes(d)?' selected':''}" onclick="_toggleRep('${d}')">${d}</div>`).join('')}</div>`;
+}
+window._toggleRep=function(d){
+  if(_selReplicar.includes(d))_selReplicar=_selReplicar.filter(x=>x!==d);
+  else _selReplicar.push(d);
+  const el=document.getElementById('rep-days');
+  if(el){const others=DAYS.filter(x=>x!==activeDay&&x!=='Dom');
+    el.innerHTML=others.map(x=>`<div class="rep-day${_selReplicar.includes(x)?' selected':''}" onclick="_toggleRep('${x}')">${x}</div>`).join('');}
+};
+function applyReplicar(block){
+  _selReplicar.forEach(d=>{
+    if(!schedule[d])schedule[d]=[];
+    const exists=schedule[d].find(b=>b.id===block.id);
+    if(exists){exists.name=block.name;exists.cat=block.cat;exists.start=block.start;exists.end=block.end;}
+    else{schedule[d].push({...block,id:'u'+(++idC)});}
+  });
+}
 function showModal(html){closeModal();document.body.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modal" onclick="if(event.target.id==='modal')closeModal()">${html}</div>`);}
 function closeModal(){const m=document.getElementById('modal');if(m)m.remove();}
 
@@ -496,11 +520,13 @@ function openNew(start,end){
     <div class="custom-cat-row"><input type="text" id="new-cat-input" placeholder="Nova categoria..."/><button onclick="addCustomCat()">+ Criar</button></div>
     <div class="field-label">Horário</div>
     <div class="time-row"><input type="time" id="ms" value="${s}"/><input type="time" id="me" value="${e}"/></div>
+    ${replicarHtml()}
     <div class="modal-actions">
       <button class="btn" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveNew()">Salvar</button>
     </div>
   </div>`);
+  _selReplicar=[];
   renderCatChips('livre');
   setTimeout(()=>{const el=document.getElementById('mn');if(el)el.focus();},100);
 }
@@ -510,8 +536,11 @@ function saveNew(){
   const start=document.getElementById('ms').value,end=document.getElementById('me').value;
   if(!name)return;
   if(!schedule[activeDay])schedule[activeDay]=[];
-  schedule[activeDay].push({id:'u'+(++idC),start,end,name,cat:_selCat});
+  const newBlock={id:'u'+(++idC),start,end,name,cat:_selCat};
+  schedule[activeDay].push(newBlock);
+  if(_selReplicar.length)applyReplicar(newBlock);
   saveLocal();if(fbLoaded)fbSaveSchedule();
+  if(_selReplicar.length)showToast(`Replicado para: ${_selReplicar.join(', ')}`);
   closeModal();renderTimeline();scheduleNotifs();
 }
 
@@ -542,11 +571,13 @@ function openEdit(id){
     </div>
     <div id="jejum-info" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,159,90,0.1);border-radius:10px;border:0.5px solid rgba(255,159,90,0.2);font-size:12px;color:var(--orange);">🔥 Registrado como jejum intencional</div>
     `:''}
+    ${replicarHtml()}
     <div class="modal-actions">
       <button class="btn btn-danger" onclick="delBlock('${id}')">Excluir</button>
       <button class="btn btn-primary" onclick="saveEdit('${id}')">Salvar</button>
     </div>
   </div>`);
+  _selReplicar=[];
   renderCatChips(b.cat);
   if(showStatus){renderStatusBtns(log&&log.jejum?'jejum':_selStatus, b.cat);}
 }
@@ -568,7 +599,9 @@ function saveEdit(id){
       setLog(id,dk,{status:_selStatus,jejum:false,mins:_selStatus==='partial'?mins:null});
     }
   }
+  if(_selReplicar.length)applyReplicar(b);
   saveLocal();if(fbLoaded)fbSaveSchedule();
+  if(_selReplicar.length)showToast(`Replicado para: ${_selReplicar.join(', ')}`);
   closeModal();renderTimeline();scheduleNotifs();
   if(currentPage==='stats')renderStats();
 }
